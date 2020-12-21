@@ -10,20 +10,15 @@ import java.util.stream.Collectors;
 import org.jsmart.zerocode.core.di.main.ApplicationMainModule;
 import org.jsmart.zerocode.core.di.module.RuntimeHttpClientModule;
 import org.jsmart.zerocode.core.di.module.RuntimeKafkaClientModule;
-import org.jsmart.zerocode.core.domain.JsonTestCase;
-import org.jsmart.zerocode.core.domain.JsonTestCases;
-import org.jsmart.zerocode.core.domain.Scenario;
-import org.jsmart.zerocode.core.domain.ScenarioSpec;
-import org.jsmart.zerocode.core.domain.Scenarios;
-import org.jsmart.zerocode.core.domain.TargetEnv;
-import org.jsmart.zerocode.core.domain.TestPackageRoot;
-import org.jsmart.zerocode.core.domain.UseHttpClient;
-import org.jsmart.zerocode.core.domain.UseKafkaClient;
+import org.jsmart.zerocode.core.di.module.RuntimeMQTTClientModule;
+import org.jsmart.zerocode.core.domain.*;
 import org.jsmart.zerocode.core.engine.listener.ZeroCodeTestReportListener;
 import org.jsmart.zerocode.core.httpclient.BasicHttpClient;
 import org.jsmart.zerocode.core.httpclient.ssl.SslTrustHttpClient;
 import org.jsmart.zerocode.core.kafka.client.BasicKafkaClient;
 import org.jsmart.zerocode.core.kafka.client.ZerocodeCustomKafkaClient;
+import org.jsmart.zerocode.core.mqtt.client.BasicMQTTClient;
+import org.jsmart.zerocode.core.mqtt.client.ZerocodeCustomMQTTClient;
 import org.jsmart.zerocode.core.report.ZeroCodeReportGenerator;
 import org.jsmart.zerocode.core.utils.SmartUtils;
 import org.junit.runner.Description;
@@ -202,11 +197,14 @@ public class ZeroCodePackageRunner extends ParentRunner<ScenarioSpec> {
 
         Class<? extends BasicHttpClient> runtimeHttpClient = createCustomHttpClientOrDefault();
         Class<? extends BasicKafkaClient> runtimeKafkaClient = createCustomKafkaClientOrDefault();
+        Class<? extends BasicMQTTClient> runtimeMQTTClient = createCustomMQTTClientOrDefault();
 
         return createInjector(Modules.override(new ApplicationMainModule(serverEnv))
                 .with(
                         new RuntimeHttpClientModule(runtimeHttpClient),
-                        new RuntimeKafkaClientModule(runtimeKafkaClient)
+                        new RuntimeKafkaClientModule(runtimeKafkaClient),
+                        new RuntimeMQTTClientModule(runtimeMQTTClient)
+
                 ));
     }
 
@@ -235,6 +233,11 @@ public class ZeroCodePackageRunner extends ParentRunner<ScenarioSpec> {
         return kafkaClientAnnotated != null ? kafkaClientAnnotated.value() : ZerocodeCustomKafkaClient.class;
     }
 
+    public Class<? extends BasicMQTTClient> createCustomMQTTClientOrDefault() {
+        final UseMQTTClient mqttClientAnnotated = getUseMQTTClient();
+        return mqttClientAnnotated != null ? mqttClientAnnotated.value() : ZerocodeCustomMQTTClient.class;
+    }
+
     public Class<? extends BasicHttpClient> createCustomHttpClientOrDefault() {
         final UseHttpClient httpClientAnnotated = getUseHttpClient();
         return httpClientAnnotated != null ? httpClientAnnotated.value() : SslTrustHttpClient.class;
@@ -246,6 +249,10 @@ public class ZeroCodePackageRunner extends ParentRunner<ScenarioSpec> {
 
     public UseKafkaClient getUseKafkaClient() {
         return testClass.getAnnotation(UseKafkaClient.class);
+    }
+
+    public UseMQTTClient getUseMQTTClient() {
+        return testClass.getAnnotation(UseMQTTClient.class);
     }
 
     private ZeroCodeMultiStepsScenarioRunner getInjectedMultiStepsRunner() {

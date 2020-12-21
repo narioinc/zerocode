@@ -32,6 +32,7 @@
         <module>core</module>
         <module>http-testing</module>
         <module>kafka-testing</module>
+        <module>MQTT-testing</module>
         <module>junit5-testing</module>
         <module>zerocode-maven-archetype</module>
     </modules>

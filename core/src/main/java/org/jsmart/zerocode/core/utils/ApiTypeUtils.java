@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.apache.commons.lang.StringUtils.isEmpty;
 import static org.jsmart.zerocode.core.constants.ZerocodeConstants.KAFKA;
+import static org.jsmart.zerocode.core.constants.ZerocodeConstants.MQTT;
 
 public class ApiTypeUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiTypeUtils.class);
@@ -42,7 +43,10 @@ public class ApiTypeUtils {
         } else if (serviceName != null && serviceName.contains(KAFKA)) {
             apiType = ApiType.KAFKA_CALL;
 
-        } else {
+        } else if (serviceName != null && serviceName.contains(MQTT)) {
+            apiType = ApiType.MQTT_CALL;
+
+        }else {
             apiType = ApiType.JAVA_CALL;
 
         }

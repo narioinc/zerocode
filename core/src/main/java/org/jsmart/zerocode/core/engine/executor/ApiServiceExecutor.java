@@ -32,4 +32,16 @@ public interface ApiServiceExecutor {
      */
     String executeKafkaService(String kafkaServers, String kafkaTopic, String methodName, String requestJson, ScenarioExecutionState scenarioExecutionState);
 
+    /**
+     *
+     * @param mqttBrokers MQTT brokers aka servers
+     * @param mqttTopic MQTT topic(s) residing on the brokers
+     * @param methodName A publish or subscribe operation
+     * @param requestJson RAW or JSON records for producing, config settings for consuming
+     * @param scenarioExecutionState The state of the scenario execution
+     * @return String The broker acknowledgement in JSON
+     */
+    String executeMqttService(String mqttBrokers, String clientId, String mqttTopic, String methodName, String requestJson, ScenarioExecutionState scenarioExecutionState);
+
+
 }

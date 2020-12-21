@@ -1,0 +1,25 @@
+{
+    "scenarioName": "Publish a message to mqtt topic - vanilla",
+    "steps": [
+        {
+            "name": "publish_mqtt",
+            "url": "mqtt-topic:demo-1",
+            "operation": "mqttpublish",
+            "clientId": "testdevice-1",
+            "request": {
+                "recordType" : "RAW",
+                "records":[
+                    {
+                        "qos": "1",
+                        "retained": false,
+                        "payload": "{\"text\" : \"Hello world123\"}"
+                    }
+                ]
+            },
+            "assertions": {
+                "status" : "Success",
+                "recordMetadata" : "$IS.NULL"
+            }
+        }
+    ]
+}

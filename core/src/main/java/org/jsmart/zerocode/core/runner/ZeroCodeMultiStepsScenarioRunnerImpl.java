@@ -30,9 +30,11 @@ import org.slf4j.Logger;
 
 import static java.util.Optional.ofNullable;
 import static org.jsmart.zerocode.core.constants.ZerocodeConstants.KAFKA_TOPIC;
+import static org.jsmart.zerocode.core.constants.ZerocodeConstants.MQTT_TOPIC;
 import static org.jsmart.zerocode.core.domain.builders.ZeroCodeExecReportBuilder.newInstance;
 import static org.jsmart.zerocode.core.engine.mocker.RestEndPointMocker.wireMockServer;
 import static org.jsmart.zerocode.core.kafka.helper.KafkaCommonUtils.printBrokerProperties;
+import static org.jsmart.zerocode.core.mqtt.helper.MQTTCommonUtils.printMQTTBrokerProperties;
 import static org.jsmart.zerocode.core.utils.ApiTypeUtils.apiType;
 import static org.jsmart.zerocode.core.utils.RunnerUtils.getFullyQualifiedUrl;
 import static org.jsmart.zerocode.core.utils.RunnerUtils.getParameterSize;
@@ -83,6 +85,10 @@ public class ZeroCodeMultiStepsScenarioRunnerImpl implements ZeroCodeMultiStepsS
     @Inject(optional = true)
     @Named("kafka.bootstrap.servers")
     private String kafkaServers;
+
+    @Inject(optional = true)
+    @Named("mqtt.broker.server")
+    private String mqttBroker;
 
     //guice -ends
 
@@ -383,6 +389,7 @@ public class ZeroCodeMultiStepsScenarioRunnerImpl implements ZeroCodeMultiStepsS
                               ScenarioExecutionState scenarioExecutionState) {
 
         String url = thisStep.getUrl();
+        String clientId = thisStep.getClientId();
         String operationName = thisStep.getOperation();
         String stepId = thisStep.getId();
         String thisStepName = thisStep.getName();
@@ -442,7 +449,24 @@ public class ZeroCodeMultiStepsScenarioRunnerImpl implements ZeroCodeMultiStepsS
                 String topicName = url.substring(KAFKA_TOPIC.length());
                 executionResult = apiExecutor.executeKafkaService(kafkaServers, topicName, operationName, resolvedRequestJson, scenarioExecutionState);
                 break;
+            case MQTT_CALL:
+                if (mqttBroker == null) {
+                    throw new RuntimeException(">>> 'mqtt.broker.server' property can not be null for MQTT operations");
+                }
+                printMQTTBrokerProperties(mqttBroker);
+                correlLogger.aRequestBuilder()
+                        .relationshipId(logPrefixRelationshipId)
+                        .requestTimeStamp(requestTimeStamp)
+                        .step(thisStepName)
+                        .url(url)
+                        .method(operationName.toUpperCase())
+                        .id(stepId)
+                        .request(prettyPrintJson(resolvedRequestJson));
 
+                String mqttTopicName = url.substring(MQTT_TOPIC.length());
+                LOGGER.info("topic is :: " + mqttTopicName);
+                executionResult = apiExecutor.executeMqttService(mqttBroker, clientId, mqttTopicName, operationName, resolvedRequestJson, scenarioExecutionState);
+                break;
             case NONE:
                 correlLogger.aRequestBuilder()
                         .relationshipId(logPrefixRelationshipId)

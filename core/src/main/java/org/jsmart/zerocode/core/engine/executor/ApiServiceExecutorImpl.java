@@ -6,6 +6,7 @@ import org.jsmart.zerocode.core.engine.executor.httpapi.HttpApiExecutor;
 import org.jsmart.zerocode.core.engine.executor.javaapi.JavaMethodExecutor;
 import org.jsmart.zerocode.core.engine.preprocessor.ScenarioExecutionState;
 import org.jsmart.zerocode.core.kafka.client.BasicKafkaClient;
+import org.jsmart.zerocode.core.mqtt.client.BasicMQTTClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,9 @@ public class ApiServiceExecutorImpl implements ApiServiceExecutor {
 
     @Inject
     private BasicKafkaClient kafkaClient;
+
+    @Inject
+    private BasicMQTTClient mqttClient;
 
     @Inject(optional = true)
     @Named("mock.api.port")
@@ -57,5 +61,10 @@ public class ApiServiceExecutorImpl implements ApiServiceExecutor {
     @Override
     public String executeKafkaService(String kafkaServers, String kafkaTopic, String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
         return kafkaClient.execute(kafkaServers, kafkaTopic, operation, requestJson, scenarioExecutionState);
+    }
+
+    @Override
+    public String executeMqttService(String mqttServers, String clientId, String mqttTopic,  String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
+        return mqttClient.execute(mqttServers, clientId, mqttTopic, operation, requestJson, scenarioExecutionState);
     }
 }
