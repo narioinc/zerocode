@@ -40,13 +40,13 @@ public class MQTTClientHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(MQTTClientHelper.class);
     private static final Gson gson = new GsonSerDeProvider().get();
     private static final ObjectMapper objectMapper = new ObjectMapperProvider().get();
-    //public MqttAsyncClient client;
-    public static MqttAsyncClient createMqttAsyncClient(String broker, String clientId, String clientPropertyFile) {
+
+    public static MqttAsyncClient createMqttAsyncClient(String broker, String clientPropertyFile) {
         try (InputStream propsIs = Resources.getResource(clientPropertyFile).openStream()) {
             Properties properties = new Properties();
             properties.load(propsIs);
             properties.put(MQTT_BROKER, broker);
-            properties.put(MQTT_CLIENTID, clientId);
+            String clientId = (String)properties.get(MQTT_CLIENTID);
 
             resolveValuePlaceHolders(properties);
             MqttAsyncClient client = new MqttAsyncClient(broker, clientId);
@@ -61,12 +61,12 @@ public class MQTTClientHelper {
         }
     }
 
-    public static MqttClient createMqttClient(String broker, String clientId, String clientPropertyFile) {
+    public static MqttClient createMqttClient(String broker, String clientPropertyFile) {
         try (InputStream propsIs = Resources.getResource(clientPropertyFile).openStream()) {
             Properties properties = new Properties();
             properties.load(propsIs);
             properties.put(MQTT_BROKER, broker);
-            properties.put(MQTT_CLIENTID, clientId);
+            String clientId = (String)properties.get(MQTT_CLIENTID);
 
             resolveValuePlaceHolders(properties);
             MqttClient client = new MqttClient(broker, clientId);

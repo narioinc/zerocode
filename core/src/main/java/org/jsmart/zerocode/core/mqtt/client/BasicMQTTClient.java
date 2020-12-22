@@ -24,20 +24,20 @@ public class BasicMQTTClient {
     public BasicMQTTClient() {
     }
 
-    public String execute(String brokers, String clientId, String topicName, String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
-        LOGGER.info("brokers:{},  clientId:{}, topicName:{}, operation:{}, requestJson:{}", brokers, clientId, topicName, operation, requestJson);
+    public String execute(String brokers, String topicName, String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
+        LOGGER.info("brokers:{}, topicName:{}, operation:{}, requestJson:{}", brokers, topicName, operation, requestJson);
 
         try {
             LOGGER.info("Operation is :: " + operation.toLowerCase());
             switch (operation.toLowerCase()) {
                 case "publish":
-                    return publisher.publish(brokers, clientId, topicName, requestJson, scenarioExecutionState);
+                    return publisher.publish(brokers, topicName, requestJson, scenarioExecutionState);
 
                 case "subscribe":
-                    return subscriber.subscribe(brokers, clientId, topicName, requestJson);
+                    return subscriber.subscribe(brokers, topicName, requestJson);
 
                 case "pubsub":
-                    return pubSub.pubSub(brokers, clientId, topicName, requestJson, scenarioExecutionState);
+                    return pubSub.pubSub(brokers, topicName, requestJson, scenarioExecutionState);
 
                 case "poll":
                     throw new RuntimeException("poll - Not yet Implemented");

@@ -31,11 +31,10 @@ public class MQTTSubscriber implements MqttCallback {
     private String subscriberPropertyFile;
     private byte[] mqttPayload;
 
-    public String subscribe(String broker, String clientId, String topicName, String requestJsonWithConfig) throws IOException, MqttException, InterruptedException {
+    public String subscribe(String broker, String topicName, String requestJsonWithConfig) throws IOException, MqttException, InterruptedException {
 
-        LOGGER.info("Subscriber config broker:{} clientId:{} topicName:{}", broker, clientId, topicName);
-        MqttClient subscriber = createMqttClient(broker, clientId, subscriberPropertyFile);
-        LOGGER.info("subscriber is connected :: {}", subscriber.isConnected() );
+        MqttClient subscriber = createMqttClient(broker, subscriberPropertyFile);
+        LOGGER.info("subscriber is connected :: {} clientId: {}", subscriber.isConnected(), subscriber.getClientId());
         final List<MQTTRecord> rawRecords = new ArrayList<>();
 
         int noOfTimeOuts = 0;

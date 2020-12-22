@@ -4,7 +4,7 @@
         {
             "name": "publish_mqtt",
             "url": "mqtt-topic:demo-1",
-            "operation": "mqttsubscribe",
+            "operation": "subscribe",
             "clientId": "testdevice-1",
             "request": {
                 "recordType" : "RAW",

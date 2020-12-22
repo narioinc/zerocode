@@ -389,7 +389,6 @@ public class ZeroCodeMultiStepsScenarioRunnerImpl implements ZeroCodeMultiStepsS
                               ScenarioExecutionState scenarioExecutionState) {
 
         String url = thisStep.getUrl();
-        String clientId = thisStep.getClientId();
         String operationName = thisStep.getOperation();
         String stepId = thisStep.getId();
         String thisStepName = thisStep.getName();
@@ -465,7 +464,7 @@ public class ZeroCodeMultiStepsScenarioRunnerImpl implements ZeroCodeMultiStepsS
 
                 String mqttTopicName = url.substring(MQTT_TOPIC.length());
                 LOGGER.info("topic is :: " + mqttTopicName);
-                executionResult = apiExecutor.executeMqttService(mqttBroker, clientId, mqttTopicName, operationName, resolvedRequestJson, scenarioExecutionState);
+                executionResult = apiExecutor.executeMqttService(mqttBroker, mqttTopicName, operationName, resolvedRequestJson, scenarioExecutionState);
                 break;
             case NONE:
                 correlLogger.aRequestBuilder()

@@ -41,7 +41,7 @@ public interface ApiServiceExecutor {
      * @param scenarioExecutionState The state of the scenario execution
      * @return String The broker acknowledgement in JSON
      */
-    String executeMqttService(String mqttBrokers, String clientId, String mqttTopic, String methodName, String requestJson, ScenarioExecutionState scenarioExecutionState);
+    String executeMqttService(String mqttBrokers, String mqttTopic, String methodName, String requestJson, ScenarioExecutionState scenarioExecutionState);
 
 
 }

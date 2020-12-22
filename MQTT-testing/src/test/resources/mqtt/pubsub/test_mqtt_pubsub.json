@@ -4,7 +4,7 @@
         {
             "name": "publish_mqtt",
             "url": "mqtt-topic:demo-1",
-            "operation": "publish",
+            "operation": "pubsub",
             "clientId": "testdevice-1",
             "request": {
                 "recordType" : "RAW",
@@ -18,7 +18,8 @@
             },
             "assertions": {
                 "status" : "Success",
-                "recordMetadata" : "$IS.NULL"
+                "recordMetadata" : "$IS.NULL",
+                "message" : "{\"text\" : \"Hello world123\"}"
             }
         }
     ]

@@ -64,7 +64,7 @@ public class ApiServiceExecutorImpl implements ApiServiceExecutor {
     }
 
     @Override
-    public String executeMqttService(String mqttServers, String clientId, String mqttTopic,  String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
-        return mqttClient.execute(mqttServers, clientId, mqttTopic, operation, requestJson, scenarioExecutionState);
+    public String executeMqttService(String mqttServers, String mqttTopic,  String operation, String requestJson, ScenarioExecutionState scenarioExecutionState) {
+        return mqttClient.execute(mqttServers, mqttTopic, operation, requestJson, scenarioExecutionState);
     }
 }

@@ -54,8 +54,9 @@ public class MQTTPublisher {
     private final ObjectMapper objectMapper = new ObjectMapperProvider().get();
     private final Gson gson = new GsonSerDeProvider().get();
 
-    public String publish(String broker, String clientId, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException {
-        MqttAsyncClient publisherClient= createMqttAsyncClient(broker, clientId, publisherPropertyFile);
+    public String publish(String broker, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException {
+        MqttAsyncClient publisher= createMqttAsyncClient(broker, publisherPropertyFile);
+        LOGGER.info("publisher is connected :: {}  clientId : {}", publisher.isConnected(), publisher.getClientId());
         String deliveryDetails = null;
 
         String nullPayload = null;
@@ -75,7 +76,7 @@ public class MQTTPublisher {
                             for (int i = 0; (line = br.readLine()) != null; i++) {
                                 MQTTRecord record = gson.fromJson(line, MQTTRecord.class);
                                 LOGGER.info("From file:'{}', Sending record number: {}\n", fileName, i);
-                                sendRaw(topicName, publisherClient, record, rawRecords.getAsync());
+                                sendRaw(topicName, publisher, record, rawRecords.getAsync());
                                 deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, ""));
                             }
                         } catch (Throwable ex) {
@@ -86,7 +87,7 @@ public class MQTTPublisher {
                         //validateProduceRecord(records);
                         for (int i = 0; i < records.size(); i++) {
                             LOGGER.info("Sending record number: {}\n", i);
-                            sendRaw(topicName, publisherClient, records.get(i), rawRecords.getAsync());
+                            sendRaw(topicName, publisher, records.get(i), rawRecords.getAsync());
                             deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, ""));
                         }
                     }
@@ -103,7 +104,7 @@ public class MQTTPublisher {
             return prettyPrintJson(failedStatus);
 
         } finally {
-            publisherClient.disconnect();
+            publisher.disconnect();
         }
 
         return prettyPrintJson(deliveryDetails);

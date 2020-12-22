@@ -53,24 +53,28 @@ public class MQTTPubSub implements MqttCallback{
     private final Gson gson = new GsonSerDeProvider().get();
     private byte[] mqttPayload;
 
-    public String pubSub(String broker, String clientId, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException {
-        //TODO function to subscribe and then publish to same or different topics. for testing blackbox mqtt apps
-        return null;
-    }
+    public String pubSub(String broker, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException, InterruptedException {
 
-    public String publish(String broker, String clientId, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException {
-        MqttAsyncClient publisherClient= createMqttAsyncClient(broker, clientId, publisherPropertyFile);
+        LOGGER.info("Pubsub config broker:{} clientId:{} topicName:{}", broker, topicName);
         String deliveryDetails = null;
-
-        PublisherRawRecords rawRecords;
+        PublisherRawRecords pubRawRecords;
         String recordType = readRecordType(requestJson, RECORD_TYPE_JSON_PATH);
+        MqttClient subscriber = createMqttClient(broker, subscriberPropertyFile);
+        MqttClient publisher = createMqttClient(broker, publisherPropertyFile);
+        LOGGER.info("subscriber is connected :: {} clientId : {}", subscriber.isConnected() , subscriber.getClientId());
+        LOGGER.info("publisher is connected :: {}  clientId : {}", publisher.isConnected(), publisher.getClientId());
+        final List<MQTTRecord> rawRecords = new ArrayList<>();
+
+        int noOfTimeOuts = 0;
+        subscriber.setCallback(this);
+        subscriber.subscribe(topicName, 0);
 
         try {
             switch (recordType) {
                 case RAW:
-                    rawRecords = gson.fromJson(requestJson, PublisherRawRecords.class);
+                    pubRawRecords = gson.fromJson(requestJson, PublisherRawRecords.class);
 
-                    String fileName = rawRecords.getFile();
+                    String fileName = pubRawRecords.getFile();
                     if (fileName != null) {
                         File file = validateAndGetFile(fileName);
                         try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -78,19 +82,17 @@ public class MQTTPubSub implements MqttCallback{
                             for (int i = 0; (line = br.readLine()) != null; i++) {
                                 MQTTRecord record = gson.fromJson(line, MQTTRecord.class);
                                 LOGGER.info("From file:'{}', Sending record number: {}\n", fileName, i);
-                                sendRaw(topicName, publisherClient, record, rawRecords.getAsync());
-                                deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, ""));
+                                sendRaw(topicName, publisher, record, pubRawRecords.getAsync());
                             }
                         } catch (Throwable ex) {
                             throw new RuntimeException(ex);
                         }
                     } else {
-                        List<MQTTRecord> records = rawRecords.getRecords();
+                        List<MQTTRecord> records = pubRawRecords.getRecords();
                         //validateProduceRecord(records);
                         for (int i = 0; i < records.size(); i++) {
                             LOGGER.info("Sending record number: {}\n", i);
-                            sendRaw(topicName, publisherClient, records.get(i), rawRecords.getAsync());
-                            deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, ""));
+                            sendRaw(topicName, publisher, records.get(i), pubRawRecords.getAsync());
                         }
                     }
 
@@ -102,27 +104,9 @@ public class MQTTPubSub implements MqttCallback{
 
         } catch (Exception e) {
             LOGGER.error("Error in sending record.", e);
-            String failedStatus = objectMapper.writeValueAsString(new DeliveryDetails(FAILED, e.getMessage()));
-            return prettyPrintJson(failedStatus);
-
         } finally {
-            publisherClient.disconnect();
+            publisher.disconnect();
         }
-
-        return prettyPrintJson(deliveryDetails);
-
-    }
-
-    public String subscribe(String broker, String clientId, String topicName, String requestJsonWithConfig) throws IOException, MqttException, InterruptedException {
-
-        LOGGER.info("Subscriber config broker:{} clientId:{} topicName:{}", broker, clientId, topicName);
-        MqttClient subscriber = createMqttClient(broker, clientId, subscriberPropertyFile);
-        LOGGER.info("subscriber is connected :: {}", subscriber.isConnected() );
-        final List<MQTTRecord> rawRecords = new ArrayList<>();
-
-        int noOfTimeOuts = 0;
-        subscriber.setCallback(this);
-        subscriber.subscribe(topicName, 0);
 
         while (noOfTimeOuts < 3) {
             LOGGER.info("polling records  - noOfTimeOuts reached : " + noOfTimeOuts);
@@ -133,33 +117,27 @@ public class MQTTPubSub implements MqttCallback{
             else {
                 break;
             }
-
-            LOGGER.info("Received {} payload after {} timeouts\n", mqttPayload, noOfTimeOuts);
-
         }
+
         if(mqttPayload == null){
-            return objectMapper.writeValueAsString(new DeliveryDetails(FAILED,  ""));
+            deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(FAILED, ""));
+        }
+        else {
+            deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, new String(mqttPayload)));
         }
         subscriber.disconnect();
-
-        return objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS,  new String(mqttPayload)));
-
+        return prettyPrintJson(deliveryDetails);
     }
 
+
     private void sendRaw(String topicName,
-                           MqttAsyncClient publisher,
+                           MqttClient publisher,
                            MQTTRecord recordToSend,
                            Boolean isAsync) throws ExecutionException, MqttException {
         //ProducerRecord qualifiedRecord = prepareRecordToSend(topicName, recordToSend);
 
-        //RecordMetadata metadata;
-        if (Boolean.TRUE.equals(isAsync)) {
-            LOGGER.info("Asynchronous Publisher sending record - {}");
-            publisher.publish(topicName, recordToSend.getPayload().getBytes(), recordToSend.getQos(), recordToSend.isRetained(), null, new PublisherAsyncCallback());
-        } else {
-            LOGGER.info("Synchronous Publisher sending record - {}");
-            publisher.publish(topicName, recordToSend.getPayload().getBytes(), recordToSend.getQos(), recordToSend.isRetained());
-        }
+        LOGGER.info("Synchronous Publisher sending record - {}");
+        publisher.publish(topicName, recordToSend.getPayload().getBytes(), recordToSend.getQos(), recordToSend.isRetained());
 
         LOGGER.info("Payload was sent to broker");
 
