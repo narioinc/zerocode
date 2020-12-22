@@ -25,7 +25,7 @@ public class MqttCommonUtils {
             option.setConnectionTimeout(Integer.parseInt(properties.get(MQTT_CONN_TIMEOUT).toString()));
             option.setKeepAliveInterval(Integer.parseInt(properties.get(MQTT_KEEPALIVE).toString()));
             option.setCleanSession(Boolean.parseBoolean(properties.get(MQTT_CLEAN_SESSION).toString()));
-            if(Boolean.parseBoolean(properties.get(MQTT_SSL).toString()) == true){
+            if(Boolean.parseBoolean(properties.get(MQTT_SSL).toString())){
                 option.setSSLProperties(properties);
             }
         }

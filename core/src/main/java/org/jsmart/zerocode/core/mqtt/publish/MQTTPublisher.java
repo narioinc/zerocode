@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
@@ -16,8 +15,6 @@ import org.jsmart.zerocode.core.di.provider.ObjectMapperProvider;
 import org.jsmart.zerocode.core.engine.preprocessor.ScenarioExecutionState;
 import org.jsmart.zerocode.core.engine.preprocessor.ZeroCodeAssertionsProcessorImpl;
 import org.jsmart.zerocode.core.kafka.delivery.DeliveryDetails;
-import org.jsmart.zerocode.core.kafka.send.message.ProducerJsonRecord;
-import org.jsmart.zerocode.core.kafka.send.message.ProducerJsonRecords;
 import org.jsmart.zerocode.core.mqtt.message.MQTTRecord;
 import org.jsmart.zerocode.core.mqtt.message.PublisherRawRecords;
 import org.slf4j.Logger;
@@ -32,8 +29,6 @@ import java.util.concurrent.ExecutionException;
 
 import static org.jsmart.zerocode.core.constants.ZerocodeConstants.FAILED;
 import static org.jsmart.zerocode.core.constants.ZerocodeConstants.SUCCESS;
-import static org.jsmart.zerocode.core.kafka.KafkaConstants.JSON;
-import static org.jsmart.zerocode.core.kafka.helper.KafkaProducerHelper.validateProduceRecord;
 import static org.jsmart.zerocode.core.mqtt.MQTTConstants.RAW;
 import static org.jsmart.zerocode.core.mqtt.MQTTConstants.RECORD_TYPE_JSON_PATH;
 import static org.jsmart.zerocode.core.mqtt.helper.MQTTClientHelper.createMqttAsyncClient;
@@ -59,7 +54,6 @@ public class MQTTPublisher {
         LOGGER.info("publisher is connected :: {}  clientId : {}", publisher.isConnected(), publisher.getClientId());
         String deliveryDetails = null;
 
-        String nullPayload = null;
         PublisherRawRecords rawRecords;
         String recordType = readRecordType(requestJson, RECORD_TYPE_JSON_PATH);
 
@@ -115,14 +109,12 @@ public class MQTTPublisher {
                            MqttAsyncClient publisher,
                            MQTTRecord recordToSend,
                            Boolean isAsync) throws ExecutionException, MqttException {
-        //ProducerRecord qualifiedRecord = prepareRecordToSend(topicName, recordToSend);
 
-        //RecordMetadata metadata;
         if (Boolean.TRUE.equals(isAsync)) {
-            LOGGER.info("Asynchronous Publisher sending record - {}");
+            LOGGER.info("Asynchronous Publisher sending record");
             publisher.publish(topicName, recordToSend.getPayload().getBytes(), recordToSend.getQos(), recordToSend.isRetained(), null, new PublisherAsyncCallback());
         } else {
-            LOGGER.info("Synchronous Publisher sending record - {}");
+            LOGGER.info("Synchronous Publisher sending record");
             publisher.publish(topicName, recordToSend.getPayload().getBytes(), recordToSend.getQos(), recordToSend.isRetained());
         }
 
@@ -140,6 +132,7 @@ public class MQTTPublisher {
     private File validateAndGetFile(String fileName) {
         try {
             URL resource = getClass().getClassLoader().getResource(fileName);
+            assert resource != null;
             return new File(resource.getFile());
         } catch (Exception ex) {
             throw new RuntimeException("Error accessing file: `" + fileName + "' - " + ex);
@@ -154,7 +147,7 @@ public class MQTTPublisher {
 
         @Override
         public void onFailure(IMqttToken iMqttToken, Throwable throwable) {
-            LOGGER.error("Asynchronous Publisher failed with exception - {} ");
+            LOGGER.error("Asynchronous Publisher failed with exception");
         }
     }
 }
