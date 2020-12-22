@@ -6,4 +6,5 @@ public class CommonConfigs {
     public static final String MQTT_CLEAN_SESSION = "mqtt.cleanSession";
     public static final String MQTT_CONN_TIMEOUT = "mqtt.connectionTimeout";
     public static final String MQTT_KEEPALIVE = "mqtt.keepAliveInterval";
+    public static final String MQTT_SSL = "mqtt.ssl";
 }

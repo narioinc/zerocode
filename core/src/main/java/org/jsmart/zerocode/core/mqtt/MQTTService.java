@@ -7,5 +7,5 @@ public interface MQTTService {
     String publish(String mqttBrokers, String topicName, String requestJson);
 
     String pubAndSub(String mqttBrokers, String topicName, String requestJson);
-    
+
 }
