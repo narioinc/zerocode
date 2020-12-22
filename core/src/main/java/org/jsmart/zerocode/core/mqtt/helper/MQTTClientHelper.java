@@ -33,6 +33,7 @@ import static org.jsmart.zerocode.core.kafka.KafkaConstants.PROTO;
 import static org.jsmart.zerocode.core.mqtt.MQTTConstants.RAW;
 import static org.jsmart.zerocode.core.mqtt.common.CommonConfigs.MQTT_BROKER;
 import static org.jsmart.zerocode.core.mqtt.common.CommonConfigs.MQTT_CLIENTID;
+import static org.jsmart.zerocode.core.mqtt.common.MqttCommonUtils.getConnectOptions;
 import static org.jsmart.zerocode.core.mqtt.common.MqttCommonUtils.resolveValuePlaceHolders;
 import static org.jsmart.zerocode.core.utils.SmartUtils.prettyPrintJson;
 
@@ -48,9 +49,11 @@ public class MQTTClientHelper {
             properties.put(MQTT_BROKER, broker);
             String clientId = (String)properties.get(MQTT_CLIENTID);
 
+            MqttConnectOptions options = getConnectOptions(properties);
+
             resolveValuePlaceHolders(properties);
             MqttAsyncClient client = new MqttAsyncClient(broker, clientId);
-            client.connect();
+            client.connect(options);
 
             return client;
 
@@ -68,9 +71,11 @@ public class MQTTClientHelper {
             properties.put(MQTT_BROKER, broker);
             String clientId = (String)properties.get(MQTT_CLIENTID);
 
+            MqttConnectOptions options = getConnectOptions(properties);
+
             resolveValuePlaceHolders(properties);
             MqttClient client = new MqttClient(broker, clientId);
-            client.connect();
+            client.connect(options);
 
             return client;
 
