@@ -14,6 +14,8 @@ import org.jsmart.zerocode.core.engine.preprocessor.ZeroCodeAssertionsProcessorI
 import org.jsmart.zerocode.core.kafka.delivery.DeliveryDetails;
 import org.jsmart.zerocode.core.mqtt.message.MQTTRecord;
 import org.jsmart.zerocode.core.mqtt.message.PublisherRawRecords;
+import org.jsmart.zerocode.core.mqtt.subscribe.SubscriberLocalConfigs;
+import org.jsmart.zerocode.core.mqtt.subscribe.SubscriberLocalConfigsWrap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,7 @@ public class MQTTPubSub implements MqttCallback{
     private final ObjectMapper objectMapper = new ObjectMapperProvider().get();
     private final Gson gson = new GsonSerDeProvider().get();
     private byte[] mqttPayload;
+    final List<MQTTRecord> rawRecords = new ArrayList<MQTTRecord>();
 
     public String pubSub(String broker, String topicName, String requestJson, ScenarioExecutionState scenarioExecutionState) throws JsonProcessingException, MqttException, InterruptedException {
 
@@ -63,9 +66,9 @@ public class MQTTPubSub implements MqttCallback{
         MqttClient publisher = createMqttClient(broker, publisherPropertyFile);
         LOGGER.info("subscriber is connected :: {} clientId : {}", subscriber.isConnected() , subscriber.getClientId());
         LOGGER.info("publisher is connected :: {}  clientId : {}", publisher.isConnected(), publisher.getClientId());
-        final List<MQTTRecord> rawRecords = new ArrayList<>();
 
-        int noOfTimeOuts = 0;
+        SubscriberLocalConfigs localConfigs = readSubscriberLocalTestProperties(requestJson);
+
         subscriber.setCallback(this);
         subscriber.subscribe(topicName, 0);
 
@@ -89,7 +92,6 @@ public class MQTTPubSub implements MqttCallback{
                         }
                     } else {
                         List<MQTTRecord> records = pubRawRecords.getRecords();
-                        //validateProduceRecord(records);
                         for (int i = 0; i < records.size(); i++) {
                             LOGGER.info("Sending record number: {}\n", i);
                             sendRaw(topicName, publisher, records.get(i), pubRawRecords.getAsync());
@@ -108,25 +110,14 @@ public class MQTTPubSub implements MqttCallback{
             publisher.disconnect();
         }
 
-        while (noOfTimeOuts < 3) {
-            LOGGER.info("polling records  - noOfTimeOuts reached : " + noOfTimeOuts);
-            if(mqttPayload == null){
-                TimeUnit.SECONDS.sleep(5);
-                noOfTimeOuts++;
-            }
-            else {
-                break;
-            }
-        }
+        TimeUnit.MILLISECONDS.sleep(localConfigs.getSubscriptionTimeout());
 
-        if(mqttPayload == null){
-            deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(FAILED, ""));
-        }
-        else {
-            deliveryDetails = objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS, new String(mqttPayload)));
+        if(rawRecords.size() <=0){
+            return objectMapper.writeValueAsString(new DeliveryDetails(FAILED,  ""));
         }
         subscriber.disconnect();
-        return prettyPrintJson(deliveryDetails);
+
+        return prepareResult(rawRecords);
     }
 
 
@@ -159,6 +150,19 @@ public class MQTTPubSub implements MqttCallback{
         }
     }
 
+    public static SubscriberLocalConfigs readSubscriberLocalTestProperties(String requestJsonWithConfigWrapped) {
+        LOGGER.info("request json : {}", requestJsonWithConfigWrapped);
+        try {
+            SubscriberLocalConfigsWrap subscriberLocalConfigsWrap = (new ObjectMapperProvider().get())
+                    .readValue(requestJsonWithConfigWrapped, SubscriberLocalConfigsWrap.class);
+            LOGGER.info("request json : {}", subscriberLocalConfigsWrap.getSubscriberLocalConfigs());
+            return subscriberLocalConfigsWrap.getSubscriberLocalConfigs();
+
+        } catch (IOException exx) {
+            throw new RuntimeException(exx);
+        }
+    }
+
     @Override
     public void connectionLost(Throwable throwable) {
         LOGGER.info("connection to broker lost");
@@ -168,6 +172,12 @@ public class MQTTPubSub implements MqttCallback{
     public void messageArrived(String s, MqttMessage mqttMessage) throws Exception {
         LOGGER.info("Message arrived: {}", new String(mqttMessage.getPayload()));
         mqttPayload = mqttMessage.getPayload();
+        MQTTRecord record = new MQTTRecord();
+        record.setPayload(new String(mqttPayload));
+        record.setQos(mqttMessage.getQos());
+        record.setRetained(mqttMessage.isRetained());
+        rawRecords.add(record);
+        LOGGER.info("Raw records : {}", rawRecords.size());
     }
 
     @Override
@@ -186,4 +196,6 @@ public class MQTTPubSub implements MqttCallback{
             LOGGER.error("Asynchronous Publisher failed with exception - {} ");
         }
     }
+
+
 }

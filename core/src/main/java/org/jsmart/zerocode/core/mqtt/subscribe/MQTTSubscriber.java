@@ -41,7 +41,6 @@ public class MQTTSubscriber implements MqttCallback {
         LOGGER.info("subscriber is connected :: {} clientId: {}", subscriber.isConnected(), subscriber.getClientId());
         SubscriberLocalConfigs localConfigs = readSubscriberLocalTestProperties(requestJsonWithConfig);
 
-        int noOfTimeOuts = 0;
         subscriber.setCallback(this);
         subscriber.subscribe(topicName, 0);
 
@@ -52,7 +51,6 @@ public class MQTTSubscriber implements MqttCallback {
         }
         subscriber.disconnect();
 
-        //return objectMapper.writeValueAsString(new DeliveryDetails(SUCCESS,  new String(mqttPayload)));
         return prepareResult(rawRecords);
 
     }

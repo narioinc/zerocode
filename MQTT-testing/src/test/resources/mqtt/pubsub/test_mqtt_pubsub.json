@@ -8,7 +8,9 @@
             "clientId": "testdevice-1",
             "request": {
                 "recordType" : "RAW",
-                "subscriptionTimeout": 500,
+                "subscriberLocalConfigs": {
+                    "subscriptionTimeout": 15000
+                },
                 "records":[
                     {
                         "qos": "1",
@@ -19,12 +21,11 @@
             },
             "assertions": {
                 "size": 1,
-                "record": {
+                "records": [{
+                    "qos": 0,
+                    "retained": false,
                     "payload": "{\"text\" : \"Hello world123\"}"
-                },
-                "status" : "Success",
-                "recordMetadata" : "$IS.NULL",
-                "message" : "{\"text\" : \"Hello world123\"}"
+                }]
             }
         }
     ]
