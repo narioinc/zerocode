@@ -8,17 +8,24 @@
             "clientId": "testdevice-1",
             "request": {
                 "recordType" : "RAW",
+                "subscriberLocalConfigs": {
+                    "subscriptionTimeout": 15000
+                },
                 "records":[
                     {
-                        "qos": "1",
+                        "qos": 1,
                         "retained": false,
                         "payload": "{\"text\" : \"Hello world123\"}"
                     }
                 ]
             },
             "assertions": {
-                "status" : "Success",
-                "message" : "wdwd123"
+                "size": 1,
+                "records": [{
+                    "qos": 0,
+                    "retained": false,
+                    "payload": "{\"text\" : \"Hello world123\"}"
+                }]
             }
         }
     ]

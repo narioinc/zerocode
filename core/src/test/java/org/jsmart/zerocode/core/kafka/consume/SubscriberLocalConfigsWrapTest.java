@@ -12,7 +12,7 @@ import static org.hamcrest.core.Is.is;
 import static org.skyscreamer.jsonassert.JSONAssert.assertEquals;
 import static org.skyscreamer.jsonassert.JSONCompareMode.LENIENT;
 
-public class ConsumerLocalConfigsWrapTest {
+public class SubscriberLocalConfigsWrapTest {
     ObjectMapper objectMapper = new ObjectMapperProvider().get();
 
     @Test
